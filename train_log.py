@@ -26,7 +26,28 @@ def strlize(variable):
         valuestr = str(variable)
     return valuestr
 
-
+def readiter(strValue):
+    if len(strValue) > 0:
+        i=0
+        while strValue[i] == '[':
+            i+=1
+        pos = strValue.find(']'*i)
+        value = []
+        if strValue[0] == '[':                      
+            value_list = readiter(strValue[1:pos+i-1])          
+            value.append(value_list)
+            value_list = readiter(strValue[pos+i+1:])
+            for item in value_list:
+                value.append(item)            
+        else:
+            value_tmp = strValue.split(',')
+            for item in value_tmp:
+                value.append(float(item))
+                #print(float(item))
+        return value
+    else:
+        return []
+ 
 class train_log(object):
     def __init__(self,path='log/'):
         self.log_path = path
@@ -49,17 +70,20 @@ class train_log(object):
         for var_name in self.log_dic:
             self.saveEvalData(var_name, self.log_dic[var_name]) 
             self.log_dic[var_name].clear()
-    
+            
     def write_file(self, filename, data):
         with open(self.log_path+filename,'a+',encoding='utf-8') as f:
             for item in data:
                 f.write(str(item) + '\n') 
-             
-    def readlog(self, var_name):
+                
+    def readlog(self, var_name, maxrecord=10000):
         parameterlist = []
         with open(self.log_path+var_name,'r',encoding='utf-8') as f:
-            while True: 
+            print('file open success')
+            i = 0
+            while (True and i <maxrecord): 
                 line = f.readline()
+                i += 1
                 if line == '':
                     break
                 if line.find(' '+var_name+':') > 0:
@@ -68,18 +92,6 @@ class train_log(object):
                         line = line[line.find('global step:')+len('global step:'):]
                         step  = int(line[:line.find(',')])
                         value = line[line.find(var_name+':')+len(var_name+':'):line.find('\n')]
-                        try:
-                            value = float(value)
-                        except ValueError:
-                            if value[0] == '[':
-                                value = value[1:]
-                                itemlist = []
-                                while value.find(",") > 0: 
-                                    item = float(value[:value.find(",")])
-                                    itemlist.append(item)
-                                    value = value[value.find(",")+1:]
-                                item = float(value[:-1])
-                                itemlist.append(item)
-                            value = itemlist                                    
-                    parameterlist.append([step, value]) 
+                        value_list = readiter(value)[0]                       
+                    parameterlist.append([step, value_list]) 
         return parameterlist
