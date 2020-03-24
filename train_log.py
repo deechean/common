@@ -8,6 +8,7 @@ Created on Tue Jun 11 20:54:08 2019
 
 import os 
 import time
+import threading
 
 def isIter(variable):
     try:
@@ -47,7 +48,19 @@ def readiter(strValue):
         return value
     else:
         return []
- 
+
+class save_log(threading.Thread):
+    def __init__(self, filename, datalist):
+        threading.Thread.__init__(self)
+        self.filename = filename
+        self.datalist = datalist.copy()
+        
+    def run(self):
+        with open(self.filename,'a+',encoding='utf-8') as f:
+            for x in self.datalist:
+                f.write(str(x) + '\n')    
+        print('File saved.')
+    
 class train_log(object):
     def __init__(self,path='log/'):
         self.log_path = path
@@ -62,10 +75,11 @@ class train_log(object):
         self.log_dic[var_name].append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+ ', global step: '+ str(globalstep) + ', '+ var_name +':'+valuestr)
         
     def saveEvalData(self,var_name, datalist):
-        with open(self.log_path+var_name,'a+',encoding='utf-8') as f:
-            for x in datalist:
-                f.write(str(x) + '\n') 
-                
+        filename = self.log_path+var_name
+        save_thread = save_log(filename, datalist)
+        save_thread.start()
+        print('Start a thread to save.')
+                    
     def SaveToFile(self):
         for var_name in self.log_dic:
             self.saveEvalData(var_name, self.log_dic[var_name]) 
