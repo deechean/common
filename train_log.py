@@ -59,7 +59,7 @@ class save_log(threading.Thread):
         with open(self.filename,'a+',encoding='utf-8') as f:
             for x in self.datalist:
                 f.write(str(x) + '\n')    
-        print('File saved.')
+        #print('File saved.')
     
 class train_log(object):
     def __init__(self,path='log/'):
@@ -78,7 +78,7 @@ class train_log(object):
         filename = self.log_path+var_name
         save_thread = save_log(filename, datalist)
         save_thread.start()
-        print('Start a thread to save.')
+        #print('Start a thread to save.')
                     
     def SaveToFile(self):
         for var_name in self.log_dic:

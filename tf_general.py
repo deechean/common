@@ -41,10 +41,8 @@ def conv2d(x, ksize, stride, filter_out, name, padding='VALID', activate = 'NONE
         
         #use random uniform to initialize weight
         weight_initializer = tf.random_uniform_initializer(minval=-stddev, maxval=stddev, dtype=tf.float32)
-        
-        #use random uniform to initialize bias
-        bias_initializer = tf.random_uniform_initializer(minval=-stddev, maxval=stddev, dtype=tf.float32)
-        
+        #weight_initializer = tf.truncated_normal_initializer()
+               
         #kernel shape is [kenel size, kernel size, filter in size, filter out size]
         shape = [ksize, ksize, filter_in, filter_out]
         
@@ -52,7 +50,7 @@ def conv2d(x, ksize, stride, filter_out, name, padding='VALID', activate = 'NONE
         kernel = get_variable('kernel', shape, weight_initializer)
         
         #set bias, bias shape is [filter_out]
-        bias = get_variable('bias', [filter_out], bias_initializer)
+        bias = get_variable('bias', [filter_out], tf.zeros_initializer())
         
         #conv2d
         conv = tf.nn.conv2d(x, kernel, [1, stride, stride, 1], padding=padding, name='conv')
@@ -89,14 +87,14 @@ def avg_pool(x, ksize, stride, name, padding):
     """    
     return tf.nn.avg_pool(x, [1, ksize, ksize, 1],[1, stride, stride, 1], name=name, padding=padding)
 
-def flatten(x):
+def flatten(x, name):
     """Reshape x to a list(one dimesion)
     """    
     shape = x.get_shape().as_list()
     dim = 1
     for i in range(1, len(shape)):
         dim *= shape[i]
-    return tf.reshape(x, [-1, dim]), dim
+    return tf.layers.flatten(x,name=name), dim
 
 def fc_layer(x, i_size, o_size, name, activate = 'NONE'):
     """Full connection layer
@@ -107,8 +105,12 @@ def fc_layer(x, i_size, o_size, name, activate = 'NONE'):
         activate: RELU - relu or SIGMOID  -sigmoid, TANH - tanh
     """
     with tf.variable_scope(name) as scope:
-        w = tf.get_variable('w', shape=[i_size, o_size], dtype='float')
-        b = tf.get_variable('b', shape=[o_size], dtype='float')
+        #use random uniform to initialize weight
+        stddev = 1. / tf.sqrt(tf.cast(o_size, tf.float32))
+        weight_initializer = tf.random_uniform_initializer(minval=-stddev, maxval=stddev, dtype=tf.float32)
+        
+        w = tf.get_variable('w', shape=[i_size, o_size], dtype='float', initializer = weight_initializer)
+        b = tf.get_variable('b', shape=[o_size], dtype='float',  initializer= tf.zeros_initializer())
         out = tf.nn.xw_plus_b(x, w, b, name=scope.name)
         
          #activate           
